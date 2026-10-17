@@ -77,7 +77,8 @@ passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
-  scope: ["profile", "email"]
+  scope: ["profile", "email"],
+  prompt: "select_account"
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails?.[0]?.value;
