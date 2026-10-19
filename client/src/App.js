@@ -12,12 +12,14 @@ import ResetPassword from "./pages/ResetPassword";
 import LoginSuccess from "./pages/LoginSuccess";
 import Logout from "./pages/Logout";
 import NotFound from "./pages/NotFound";
+import ImageDetail from "./pages/ImageDetail";
 
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
+          <Route path="/i/:id" element={<ProtectedRoute><ImageDetail /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

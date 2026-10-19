@@ -1,14 +1,16 @@
 import { Card, Typography, Box, Avatar } from "@mui/material";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function ImageCard({ image, onOpen }) {
+export default function ImageCard({ image }) {
   const [hovered, setHovered] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Card
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={onOpen}
+      onClick={() => navigate(`/i/${image._id}`)}
       sx={{
         borderRadius: 2,
         overflow: "hidden",

@@ -6,7 +6,6 @@ import { Search } from "@mui/icons-material";
 import Masonry from "react-masonry-css";
 import Navbar from "../components/Navbar";
 import ImageCard from "../components/ImageCard";
-import Lightbox from "yet-another-react-lightbox";
 import api from "../api/axios";
 
 const breakpointCols = { default: 4, 1200: 3, 900: 3, 600: 2, 400: 1 };
@@ -125,23 +124,12 @@ export default function Home() {
           >
             {filtered.map((img, idx) => (
               <ImageCard
-                key={img._id}
                 image={img}
-                onOpen={() => setLightboxIndex(idx)}
               />
             ))}
           </Masonry>
         )}
       </Container>
-
-      {lightboxIndex >= 0 && (
-        <Lightbox
-          open
-          close={() => setLightboxIndex(-1)}
-          index={lightboxIndex}
-          slides={filtered.map((i) => ({ src: i.url, title: i.title }))}
-        />
-      )}
     </>
   );
 }
