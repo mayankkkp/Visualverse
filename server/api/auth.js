@@ -5,6 +5,9 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { body, validationResult } = require("express-validator");
 const passport = require("passport");
+const Brevo = require("@getbrevo/brevo");
+const { BrevoClient } = require("@getbrevo/brevo");
+const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
 
 const User = require("../models/User");
 const auth = require("../middleware/auth");
@@ -17,15 +20,12 @@ const signToken = (userId) =>
   });
 
 const sendEmail = async ({ to, subject, html }) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-    });
-    await transporter.sendMail({ from: `"VisualVerse" <${process.env.EMAIL_USER}>`, to, subject, html });
-  } catch (err) {
-    console.error("Email send failed:", err.message);
-  }
+  await brevo.transactionalEmails.sendTransacEmail({
+    sender: { name: "VisualVerse", email: "mayankpal2311@gmail.com" },
+    to: [{ email: to }],
+    subject: subject,
+    htmlContent: html,
+  });
 };
 
 // ---------- Signup ----------
@@ -124,7 +124,13 @@ router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(200).json({ message: "If email exists, a reset link was sent" });
+
+    // Always respond the same way for security
+    const genericResponse = {
+      message: "If that email is registered, a reset link has been sent."
+    };
+
+    if (!user) return res.json(genericResponse);
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetPasswordToken = token;
@@ -132,16 +138,41 @@ router.post("/forgot-password", async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${token}`;
-    await sendEmail({
-      to: user.email,
-      subject: "VisualVerse - Password Reset",
-      html: `<p>Click the link below to reset your password (valid for 1 hour):</p>
-             <a href="${resetUrl}">${resetUrl}</a>`
-    });
+    console.log("🔗 Reset URL:", resetUrl);  // ⬅️ so you can test manually
 
-    res.json({ message: "If email exists, a reset link was sent" });
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your VisualVerse password",
+        html: `
+          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #0A0A0A;">
+            <h2 style="font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 8px;">
+              Reset your password
+            </h2>
+            <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+              Click the button below to set a new password. This link expires in 1 hour.
+            </p>
+            <a href="${resetUrl}" style="display: inline-block; background: #0A0A0A; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 14px;">
+              Reset password
+            </a>
+            <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 24px 0 0;">
+              If you didn't request this, you can safely ignore this email.
+            </p>
+            <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 8px 0 0; word-break: break-all;">
+              Or paste this URL: ${resetUrl}
+            </p>
+          </div>
+        `,
+      });
+      console.log("✅ Email sent to", user.email);
+    } catch (mailErr) {
+      console.error("❌ Email send failed:", mailErr.message);
+      // Don't fail the request — still return success for security
+    }
+
+    res.json(genericResponse);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Forgot-password error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
