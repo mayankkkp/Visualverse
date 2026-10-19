@@ -1,51 +1,61 @@
 const express = require("express");
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 const auth = require("../middleware/auth");
 const Image = require("../models/Image");
 
 const router = express.Router();
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "visualverse",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
-    transformation: [{ width: 1600, crop: "limit" }]
-  }
+// Use memory storage — we'll stream the buffer to Cloudinary manually
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
+// Helper: stream buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "visualverse",
+        transformation: [{ width: 1600, crop: "limit" }],
+      },
+      (error, result) => (error ? reject(error) : resolve(result))
+    );
+    stream.end(buffer);
+  });
+};
 
 // ---------- Upload image ----------
 router.post("/upload", auth, upload.single("image"), async (req, res) => {
+  // console.log("🔍 req.file:", req.file);
+  // console.log("🔍 req.body:", req.body);
+  // console.log("🔍 content-type:", req.headers["content-type"]);
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     const { title, description } = req.body;
     if (!title) return res.status(400).json({ message: "Title is required" });
 
+    const result = await uploadToCloudinary(req.file.buffer);
+
     const image = await Image.create({
       title,
       description: description || "",
-      url: req.file.path,
-      publicId: req.file.filename,
-      owner: req.userId
+      url: result.secure_url,
+      publicId: result.public_id,
+      owner: req.userId,
     });
 
     const populated = await image.populate("owner", "name email avatar");
     res.status(201).json(populated);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Upload failed" });
+    console.error("❌ Upload error:", err);
+    res.status(500).json({ message: err.message || "Upload failed" });
   }
 });
 
-// ---------- Get all images (feed) ----------
+// ---------- Get all images ----------
 router.get("/", async (req, res) => {
   try {
     const images = await Image.find()

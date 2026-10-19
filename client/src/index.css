@@ -1,9 +1,12 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f5f5f7;
-  color: #1a1a1a;
-  -webkit-font-smoothing: antialiased;
+.masonry-grid {
+  display: flex;
+  margin-left: -20px;
+  width: auto;
 }
-a { text-decoration: none; color: inherit; }
-img { max-width: 100%; display: block; }
+.masonry-grid_column {
+  padding-left: 20px;
+  background-clip: padding-box;
+}
+.masonry-grid_column > div {
+  margin-bottom: 20px;
+}

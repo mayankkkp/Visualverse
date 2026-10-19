@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function Logout() {
   const { logout } = useAuth();
@@ -8,6 +9,7 @@ export default function Logout() {
 
   useEffect(() => {
     logout();
+    toast.success("Logged out");
     navigate("/login", { replace: true });
   }, [logout, navigate]);
 

@@ -1,70 +1,145 @@
 import { useEffect, useState } from "react";
-import { Box, Container, Grid, Typography, Alert } from "@mui/material";
+import {
+  Container, Typography, Box, Skeleton, TextField, InputAdornment, Divider,
+} from "@mui/material";
+import { Search } from "@mui/icons-material";
+import Masonry from "react-masonry-css";
 import Navbar from "../components/Navbar";
-import Loader from "../components/Loader";
 import ImageCard from "../components/ImageCard";
 import Lightbox from "yet-another-react-lightbox";
 import api from "../api/axios";
 
+const breakpointCols = { default: 4, 1200: 3, 900: 3, 600: 2, 400: 1 };
+
 export default function Home() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
   useEffect(() => {
     api.get("/api/images")
       .then((res) => setImages(res.data))
-      .catch(() => setError("Failed to load images"))
       .finally(() => setLoading(false));
   }, []);
 
-  const handleLike = async (id) => {
-    try {
-      const res = await api.put(`/api/images/${id}/like`);
-      setImages((prev) =>
-        prev.map((img) =>
-          img._id === id
-            ? { ...img, likes: Array(res.data.likes).fill("x") }
-            : img
-        )
-      );
-    } catch (err) { console.error(err); }
-  };
+  const filtered = images.filter(
+    (img) =>
+      img.title.toLowerCase().includes(search.toLowerCase()) ||
+      img.description?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <>
       <Navbar />
-      <Container sx={{ py: 4 }}>
-        <Typography variant="h4" fontWeight={700} sx={{ mb: 3 }}>
-          Discover
-        </Typography>
 
-        {loading && <Loader />}
-        {error && <Alert severity="error">{error}</Alert>}
-        {!loading && !error && images.length === 0 && (
-          <Alert severity="info">No images yet. Be the first to upload!</Alert>
+      {/* Header strip */}
+      <Box sx={{ borderBottom: "1px solid #E5E7EB", bgcolor: "#FFFFFF" }}>
+        <Container maxWidth="xl">
+          <Box sx={{ py: 8, maxWidth: 720 }}>
+            <Typography
+              variant="overline"
+              sx={{ color: "#6B7280", display: "block", mb: 2 }}
+            >
+              Discover
+            </Typography>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: 36, md: 52 },
+                mb: 2,
+              }}
+            >
+              Curated visuals from emerging creators.
+            </Typography>
+            <Typography
+              sx={{ color: "#6B7280", fontSize: 16, maxWidth: 480, lineHeight: 1.6 }}
+            >
+              A quiet collection of photography, illustration, and design — updated daily.
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Search + Grid */}
+      <Container maxWidth="xl" sx={{ py: 6 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 5,
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "#6B7280", fontSize: 13 }}>
+            {filtered.length} {filtered.length === 1 ? "image" : "images"}
+          </Typography>
+          <TextField
+            placeholder="Search by title…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="small"
+            sx={{ width: 280 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ fontSize: 18, color: "#9CA3AF" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+
+        {loading && (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: 3,
+            }}
+          >
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} variant="rounded" height={280} sx={{ borderRadius: 2 }} />
+            ))}
+          </Box>
         )}
 
-        <Grid container spacing={3}>
-          {images.map((img, idx) => (
-            <Grid item xs={12} sm={6} md={4} key={img._id}>
+        {!loading && filtered.length === 0 && (
+          <Box sx={{ textAlign: "center", py: 12 }}>
+            <Typography sx={{ fontSize: 20, fontWeight: 500, mb: 1 }}>
+              {search ? "No results" : "Nothing here yet"}
+            </Typography>
+            <Typography sx={{ color: "#6B7280", fontSize: 14 }}>
+              {search ? "Try a different search term." : "Be the first to upload."}
+            </Typography>
+          </Box>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <Masonry
+            breakpointCols={breakpointCols}
+            className="masonry-grid"
+            columnClassName="masonry-grid_column"
+          >
+            {filtered.map((img, idx) => (
               <ImageCard
+                key={img._id}
                 image={img}
-                onLike={handleLike}
                 onOpen={() => setLightboxIndex(idx)}
               />
-            </Grid>
-          ))}
-        </Grid>
+            ))}
+          </Masonry>
+        )}
       </Container>
 
       {lightboxIndex >= 0 && (
         <Lightbox
-          open={lightboxIndex >= 0}
+          open
           close={() => setLightboxIndex(-1)}
           index={lightboxIndex}
-          slides={images.map((i) => ({ src: i.url, title: i.title }))}
+          slides={filtered.map((i) => ({ src: i.url, title: i.title }))}
         />
       )}
     </>

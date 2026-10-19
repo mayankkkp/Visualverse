@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Loader from "../components/Loader";
 import ImageCard from "../components/ImageCard";
 import api from "../api/axios";
+import toast from "react-hot-toast";
 
 export default function Account() {
   const [profile, setProfile] = useState(null);
@@ -34,9 +35,11 @@ export default function Account() {
         bio: profile.bio
       });
       setProfile(res.data);
-      setMessage("Profile updated!");
+      toast.success("Profile updated!");
+      //setMessage("Profile updated!");
     } catch {
-      setMessage("Update failed");
+      toast.success("Image deleted");
+      //setMessage("Update failed");
     } finally {
       setSaving(false);
     }
