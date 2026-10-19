@@ -12,6 +12,7 @@ const cors = require("cors");
 const authRoutes = require("./api/auth");
 const imageUploadRoutes = require("./api/imageupload");
 const User = require("./models/User");
+const userRoutes = require("./api/users");
 
 const app = express();
 
@@ -116,6 +117,7 @@ passport.deserializeUser(async (id, done) => {
 // ---- Routes ----
 app.use("/auth", authRoutes);
 app.use("/api/images", imageUploadRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });

@@ -6,6 +6,13 @@ export default function ImageCard({ image }) {
   const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
 
+  const handleAvatarClick = (e) => {
+    e.stopPropagation();
+    if (image.owner?._id) {
+      navigate(`/u/${image.owner._id}`);
+    }
+  };
+
   return (
     <Card
       onMouseEnter={() => setHovered(true)}
@@ -51,8 +58,23 @@ export default function ImageCard({ image }) {
         >
           {image.title}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box
+            onClick={handleAvatarClick}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              cursor: "pointer",
+              "&:hover .author-name": { textDecoration: "underline" },
+            }}
+          >
             <Avatar
               sx={{
                 width: 18,
@@ -64,7 +86,10 @@ export default function ImageCard({ image }) {
             >
               {image.owner?.name?.[0]?.toUpperCase()}
             </Avatar>
-            <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
+            <Typography
+              className="author-name"
+              sx={{ fontSize: 12, color: "#6B7280" }}
+            >
               {image.owner?.name}
             </Typography>
           </Box>

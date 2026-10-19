@@ -93,11 +93,11 @@ export default function Navbar() {
             >
               <MenuItem
                 component={Link}
-                to="/account"
+                to={`/u/${user?.id}`}
                 onClick={() => setAnchorEl(null)}
                 sx={{ fontSize: 14 }}
               >
-                Account
+                View profile
               </MenuItem>
               <MenuItem onClick={handleLogout} sx={{ fontSize: 14 }}>
                 Sign out

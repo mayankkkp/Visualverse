@@ -162,6 +162,19 @@ export default function ImageDetail() {
                 borderBottom: "1px solid #E5E7EB",
               }}
             >
+            <Box
+              component={Link}
+              to={`/u/${image.owner?._id}`}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                flex: 1,
+                textDecoration: "none",
+                color: "inherit",
+                "&:hover .author-name": { textDecoration: "underline" },
+              }}
+            >
               <Avatar
                 sx={{
                   width: 40,
@@ -173,14 +186,18 @@ export default function ImageDetail() {
               >
                 {image.owner?.name?.[0]?.toUpperCase()}
               </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontWeight: 500, fontSize: 14 }}>
+            <Box>
+                <Typography
+                  className="author-name"
+                  sx={{ fontWeight: 500, fontSize: 14 }}
+                >
                   {image.owner?.name}
                 </Typography>
                 <Typography sx={{ color: "#9CA3AF", fontSize: 12 }}>
-                  Creator
+                  View profile
                 </Typography>
               </Box>
+            </Box>
               <Button
                 variant={isLiked ? "contained" : "outlined"}
                 startIcon={isLiked ? <Favorite /> : <FavoriteBorder />}
