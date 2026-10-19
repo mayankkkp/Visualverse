@@ -1,4 +1,4 @@
-import { Card, Typography, Box, Avatar } from "@mui/material";
+import { Card, Typography, Box, Avatar, Chip, Stack } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,9 +8,12 @@ export default function ImageCard({ image }) {
 
   const handleAvatarClick = (e) => {
     e.stopPropagation();
-    if (image.owner?._id) {
-      navigate(`/u/${image.owner._id}`);
-    }
+    if (image.owner?._id) navigate(`/u/${image.owner._id}`);
+  };
+
+  const handleTagClick = (e, tag) => {
+    e.stopPropagation();
+    navigate(`/tag/${tag}`);
   };
 
   return (
@@ -48,7 +51,7 @@ export default function ImageCard({ image }) {
             fontSize: 14,
             fontWeight: 500,
             lineHeight: 1.35,
-            mb: 1,
+            mb: image.tags?.length ? 1 : 0.75,
             overflow: "hidden",
             textOverflow: "ellipsis",
             display: "-webkit-box",
@@ -58,13 +61,28 @@ export default function ImageCard({ image }) {
         >
           {image.title}
         </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+
+        {image.tags?.length > 0 && (
+          <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mb: 1 }}>
+            {image.tags.slice(0, 3).map((tag) => (
+              <Chip
+                key={tag}
+                label={`#${tag}`}
+                size="small"
+                onClick={(e) => handleTagClick(e, tag)}
+                sx={{
+                  height: 18,
+                  fontSize: 10,
+                  bgcolor: "#F3F4F6",
+                  color: "#6B7280",
+                  "&:hover": { bgcolor: "#E5E7EB" },
+                }}
+              />
+            ))}
+          </Stack>
+        )}
+
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box
             onClick={handleAvatarClick}
             sx={{
@@ -86,10 +104,7 @@ export default function ImageCard({ image }) {
             >
               {image.owner?.name?.[0]?.toUpperCase()}
             </Avatar>
-            <Typography
-              className="author-name"
-              sx={{ fontSize: 12, color: "#6B7280" }}
-            >
+            <Typography className="author-name" sx={{ fontSize: 12, color: "#6B7280" }}>
               {image.owner?.name}
             </Typography>
           </Box>

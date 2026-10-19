@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Container, Box, Typography, Avatar, Button, TextField, IconButton,
-  Divider, Alert, Skeleton,
+  Divider, Alert, Skeleton, Chip, Stack,
 } from "@mui/material";
 import { Favorite, FavoriteBorder, ArrowBack, Delete, Send } from "@mui/icons-material";
 import Navbar from "../components/Navbar";
@@ -151,7 +151,25 @@ export default function ImageDetail() {
                 {image.description}
               </Typography>
             )}
-
+            {image.tags?.length > 0 && (
+            <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mb: 3 }}>
+              {image.tags.map((tag) => (
+                <Chip
+                  key={tag}
+                  label={`#${tag}`}
+                  size="small"
+                  component={Link}
+                  to={`/tag/${tag}`}
+                  clickable
+                  sx={{
+                    bgcolor: "#F3F4F6",
+                    color: "#0A0A0A",
+                    "&:hover": { bgcolor: "#E5E7EB" },
+                  }}
+                />
+              ))}
+            </Stack>
+          )}
             <Box
               sx={{
                 display: "flex",

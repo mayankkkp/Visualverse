@@ -27,13 +27,21 @@ const uploadToCloudinary = (buffer) => {
   });
 };
 
+
 // ---------- Upload image ----------
 router.post("/upload", auth, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    const { title, description } = req.body;
+    const { title, description, tags } = req.body;
     if (!title) return res.status(400).json({ message: "Title is required" });
+
+    // Parse tags: comma-separated string → array of lowercase trimmed strings
+    const tagArray = (tags || "")
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 5);  // max 5 tags
 
     const result = await uploadToCloudinary(req.file.buffer);
 
@@ -43,6 +51,7 @@ router.post("/upload", auth, upload.single("image"), async (req, res) => {
       url: result.secure_url,
       publicId: result.public_id,
       owner: req.userId,
+      tags: tagArray,
     });
 
     const populated = await image.populate("owner", "name email avatar");
@@ -53,15 +62,31 @@ router.post("/upload", auth, upload.single("image"), async (req, res) => {
   }
 });
 
-// ---------- Get all images ----------
+// ---------- Get all images (with search/filter) ----------
 router.get("/", async (req, res) => {
   try {
-    const images = await Image.find()
+    const { q, tag } = req.query;
+    const filter = {};
+
+    if (tag) {
+      filter.tags = tag.toLowerCase();
+    }
+    if (q) {
+      filter.$or = [
+        { title: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+        { tags: { $regex: q, $options: "i" } },
+      ];
+    }
+
+    const images = await Image.find(filter)
       .sort({ createdAt: -1 })
       .populate("owner", "name email avatar")
       .limit(100);
+
     res.json(images);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -74,6 +99,22 @@ router.get("/mine", auth, async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("owner", "name email avatar");
     res.json(images);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// ---------- Trending tags ----------
+router.get("/tags/trending", async (req, res) => {
+  try {
+    const tags = await Image.aggregate([
+      { $unwind: "$tags" },
+      { $group: { _id: "$tags", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+    res.json(tags.map((t) => ({ tag: t._id, count: t.count })));
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

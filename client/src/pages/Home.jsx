@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  Container, Typography, Box, Skeleton, TextField, InputAdornment, Divider,
+  Container, Typography, Box, Skeleton, TextField,
+  InputAdornment, Chip, Stack, Divider,
 } from "@mui/material";
 import { Search } from "@mui/icons-material";
 import Masonry from "react-masonry-css";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import ImageCard from "../components/ImageCard";
 import api from "../api/axios";
@@ -14,19 +16,30 @@ export default function Home() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [trendingTags, setTrendingTags] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/api/images")
-      .then((res) => setImages(res.data))
+    Promise.all([
+      api.get("/api/images"),
+      api.get("/api/images/tags/trending"),
+    ])
+      .then(([imgRes, tagRes]) => {
+        setImages(imgRes.data);
+        setTrendingTags(tagRes.data);
+      })
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = images.filter(
-    (img) =>
-      img.title.toLowerCase().includes(search.toLowerCase()) ||
-      img.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = images.filter((img) => {
+    const q = search.toLowerCase();
+    return (
+      img.title.toLowerCase().includes(q) ||
+      img.description?.toLowerCase().includes(q) ||
+      img.tags?.some((t) => t.includes(q))
+    );
+  });
 
   return (
     <>
@@ -36,47 +49,48 @@ export default function Home() {
       <Box sx={{ borderBottom: "1px solid #E5E7EB", bgcolor: "#FFFFFF" }}>
         <Container maxWidth="xl">
           <Box sx={{ py: 8, maxWidth: 720 }}>
-            <Typography
-              variant="overline"
-              sx={{ color: "#6B7280", display: "block", mb: 2 }}
-            >
+            <Typography variant="overline" sx={{ color: "#6B7280", display: "block", mb: 2 }}>
               Discover
             </Typography>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: { xs: 36, md: 52 },
-                mb: 2,
-              }}
-            >
+            <Typography variant="h2" sx={{ fontSize: { xs: 36, md: 52 }, mb: 2 }}>
               Curated visuals from emerging creators.
             </Typography>
-            <Typography
-              sx={{ color: "#6B7280", fontSize: 16, maxWidth: 480, lineHeight: 1.6 }}
-            >
+            <Typography sx={{ color: "#6B7280", fontSize: 16, maxWidth: 480, lineHeight: 1.6 }}>
               A quiet collection of photography, illustration, and design — updated daily.
             </Typography>
           </Box>
         </Container>
       </Box>
 
-      {/* Search + Grid */}
       <Container maxWidth="xl" sx={{ py: 6 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 5,
-            flexWrap: "wrap",
-            gap: 2,
-          }}
-        >
-          <Typography variant="body2" sx={{ color: "#6B7280", fontSize: 13 }}>
-            {filtered.length} {filtered.length === 1 ? "image" : "images"}
-          </Typography>
+        {/* Search + trending tags */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 5, flexWrap: "wrap", gap: 2 }}>
+          <Box>
+            <Typography variant="body2" sx={{ color: "#6B7280", fontSize: 13, mb: 1.5 }}>
+              {filtered.length} {filtered.length === 1 ? "image" : "images"}
+            </Typography>
+            {trendingTags.length > 0 && (
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+                {trendingTags.map((t) => (
+                  <Chip
+                    key={t.tag}
+                    label={`#${t.tag}`}
+                    size="small"
+                    onClick={() => navigate(`/tag/${t.tag}`)}
+                    sx={{
+                      cursor: "pointer",
+                      bgcolor: "#F3F4F6",
+                      color: "#0A0A0A",
+                      "&:hover": { bgcolor: "#E5E7EB" },
+                    }}
+                  />
+                ))}
+              </Stack>
+            )}
+          </Box>
+
           <TextField
-            placeholder="Search by title…"
+            placeholder="Search titles, tags…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             size="small"
@@ -92,13 +106,7 @@ export default function Home() {
         </Box>
 
         {loading && (
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: 3,
-            }}
-          >
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 3 }}>
             {[...Array(8)].map((_, i) => (
               <Skeleton key={i} variant="rounded" height={280} sx={{ borderRadius: 2 }} />
             ))}
@@ -122,10 +130,8 @@ export default function Home() {
             className="masonry-grid"
             columnClassName="masonry-grid_column"
           >
-            {filtered.map((img, idx) => (
-              <ImageCard
-                image={img}
-              />
+            {filtered.map((img) => (
+              <ImageCard key={img._id} image={img} />
             ))}
           </Masonry>
         )}
