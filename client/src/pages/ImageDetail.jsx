@@ -1,10 +1,25 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
-  Container, Box, Typography, Avatar, Button, TextField, IconButton,
-  Divider, Alert, Skeleton, Chip, Stack,
+  Container,
+  Box,
+  Typography,
+  Avatar,
+  Button,
+  TextField,
+  IconButton,
+  Divider,
+  Skeleton,
+  Chip,
+  Stack,
 } from "@mui/material";
-import { Favorite, FavoriteBorder, ArrowBack, Delete, Send } from "@mui/icons-material";
+import {
+  Favorite,
+  FavoriteBorder,
+  ArrowBack,
+  Delete,
+  Send,
+} from "@mui/icons-material";
 import Navbar from "../components/Navbar";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -42,7 +57,9 @@ export default function ImageDetail() {
         ...prev,
         likes: res.data.liked
           ? [...(prev.likes || []), user?.id || "x"]
-          : (prev.likes || []).filter((l) => l !== user?.id),
+          : (prev.likes || []).filter(
+              (l) => String(l) !== String(user?.id)
+            ),
       }));
     } catch (err) {
       toast.error("Failed to like");
@@ -79,7 +96,9 @@ export default function ImageDetail() {
     }
   };
 
-  const isLiked = image?.likes?.includes(user?.id);
+  const isLiked = image?.likes?.some(
+    (l) => String(l) === String(user?.id)
+  );
 
   if (loading) {
     return (
@@ -97,7 +116,9 @@ export default function ImageDetail() {
       <>
         <Navbar />
         <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
-          <Typography variant="h4" sx={{ mb: 2 }}>Not found</Typography>
+          <Typography variant="h4" sx={{ mb: 2 }}>
+            Not found
+          </Typography>
           <Typography sx={{ color: "#6B7280", mb: 4 }}>{error}</Typography>
           <Button variant="contained" onClick={() => navigate("/home")}>
             Back to Discover
@@ -151,25 +172,30 @@ export default function ImageDetail() {
                 {image.description}
               </Typography>
             )}
+
             {image.tags?.length > 0 && (
-            <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mb: 3 }}>
-              {image.tags.map((tag) => (
-                <Chip
-                  key={tag}
-                  label={`#${tag}`}
-                  size="small"
-                  component={Link}
-                  to={`/tag/${tag}`}
-                  clickable
-                  sx={{
-                    bgcolor: "#F3F4F6",
-                    color: "#0A0A0A",
-                    "&:hover": { bgcolor: "#E5E7EB" },
-                  }}
-                />
-              ))}
-            </Stack>
-          )}
+              <Stack
+                direction="row"
+                sx={{ flexWrap: "wrap", gap: 1, mb: 3 }}
+              >
+                {image.tags.map((tag) => (
+                  <Chip
+                    key={tag}
+                    label={`#${tag}`}
+                    size="small"
+                    component={Link}
+                    to={`/tag/${tag}`}
+                    clickable
+                    sx={{
+                      bgcolor: "#F3F4F6",
+                      color: "#0A0A0A",
+                      "&:hover": { bgcolor: "#E5E7EB" },
+                    }}
+                  />
+                ))}
+              </Stack>
+            )}
+
             <Box
               sx={{
                 display: "flex",
@@ -180,42 +206,42 @@ export default function ImageDetail() {
                 borderBottom: "1px solid #E5E7EB",
               }}
             >
-            <Box
-              component={Link}
-              to={`/u/${image.owner?._id}`}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                flex: 1,
-                textDecoration: "none",
-                color: "inherit",
-                "&:hover .author-name": { textDecoration: "underline" },
-              }}
-            >
-              <Avatar
+              <Box
+                component={Link}
+                to={`/u/${image.owner?._id}`}
                 sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "#0A0A0A",
-                  fontSize: 15,
-                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  flex: 1,
+                  textDecoration: "none",
+                  color: "inherit",
+                  "&:hover .author-name": { textDecoration: "underline" },
                 }}
               >
-                {image.owner?.name?.[0]?.toUpperCase()}
-              </Avatar>
-            <Box>
-                <Typography
-                  className="author-name"
-                  sx={{ fontWeight: 500, fontSize: 14 }}
+                <Avatar
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "#0A0A0A",
+                    fontSize: 15,
+                    fontWeight: 600,
+                  }}
                 >
-                  {image.owner?.name}
-                </Typography>
-                <Typography sx={{ color: "#9CA3AF", fontSize: 12 }}>
-                  View profile
-                </Typography>
+                  {image.owner?.name?.[0]?.toUpperCase()}
+                </Avatar>
+                <Box>
+                  <Typography
+                    className="author-name"
+                    sx={{ fontWeight: 500, fontSize: 14 }}
+                  >
+                    {image.owner?.name}
+                  </Typography>
+                  <Typography sx={{ color: "#9CA3AF", fontSize: 12 }}>
+                    View profile
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
               <Button
                 variant={isLiked ? "contained" : "outlined"}
                 startIcon={isLiked ? <Favorite /> : <FavoriteBorder />}
@@ -234,7 +260,11 @@ export default function ImageDetail() {
               Comments · {comments.length}
             </Typography>
 
-            <Box component="form" onSubmit={handleSubmitComment} sx={{ mb: 3 }}>
+            <Box
+              component="form"
+              onSubmit={handleSubmitComment}
+              sx={{ mb: 3 }}
+            >
               <TextField
                 fullWidth
                 multiline
@@ -246,7 +276,13 @@ export default function ImageDetail() {
                 sx={{ mb: 1 }}
                 inputProps={{ maxLength: 500 }}
               />
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <Typography sx={{ fontSize: 11, color: "#9CA3AF" }}>
                   {newComment.length}/500
                 </Typography>
@@ -268,53 +304,74 @@ export default function ImageDetail() {
                   No comments yet. Be the first.
                 </Typography>
               )}
-              {comments.map((comment) => (
-                <Box
-                  key={comment._id}
-                  sx={{
-                    display: "flex",
-                    gap: 1.5,
-                    py: 2,
-                    borderBottom: "1px solid #F3F4F6",
-                    "&:last-child": { borderBottom: "none" },
-                  }}
-                >
-                  <Avatar
+              {comments.map((comment) => {
+                const isCommentAuthor =
+                  String(comment.author?._id) === String(user?.id);
+                const isImageOwner =
+                  String(image.owner?._id) === String(user?.id);
+                const canDelete = isCommentAuthor || isImageOwner;
+
+                return (
+                  <Box
+                    key={comment._id}
                     sx={{
-                      width: 28,
-                      height: 28,
-                      bgcolor: "#0A0A0A",
-                      fontSize: 11,
-                      fontWeight: 600,
+                      display: "flex",
+                      gap: 1.5,
+                      py: 2,
+                      borderBottom: "1px solid #F3F4F6",
+                      "&:last-child": { borderBottom: "none" },
                     }}
                   >
-                    {comment.author?.name?.[0]?.toUpperCase()}
-                  </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography sx={{ fontWeight: 500, fontSize: 13 }}>
-                        {comment.author?.name}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11, color: "#9CA3AF" }}>
-                        {new Date(comment.createdAt).toLocaleDateString()}
+                    <Avatar
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        bgcolor: "#0A0A0A",
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {comment.author?.name?.[0]?.toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography
+                          sx={{ fontWeight: 500, fontSize: 13 }}
+                        >
+                          {comment.author?.name}
+                        </Typography>
+                        <Typography
+                          sx={{ fontSize: 11, color: "#9CA3AF" }}
+                        >
+                          {new Date(comment.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{ fontSize: 14, lineHeight: 1.6, mt: 0.5 }}
+                      >
+                        {comment.text}
                       </Typography>
                     </Box>
-                    <Typography sx={{ fontSize: 14, lineHeight: 1.6, mt: 0.5 }}>
-                      {comment.text}
-                    </Typography>
+                    {canDelete && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteComment(comment._id)}
+                        sx={{ alignSelf: "flex-start" }}
+                      >
+                        <Delete
+                          sx={{ fontSize: 14, color: "#9CA3AF" }}
+                        />
+                      </IconButton>
+                    )}
                   </Box>
-                  {(comment.author?._id === user?.id ||
-                    image.owner?._id === user?.id) && (
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeleteComment(comment._id)}
-                      sx={{ alignSelf: "flex-start" }}
-                    >
-                      <Delete sx={{ fontSize: 14, color: "#9CA3AF" }} />
-                    </IconButton>
-                  )}
-                </Box>
-              ))}
+                );
+              })}
             </Box>
           </Box>
         </Box>

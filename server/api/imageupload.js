@@ -4,7 +4,7 @@ const cloudinary = require("../config/cloudinary");
 const auth = require("../middleware/auth");
 const Image = require("../models/Image");
 const Comment = require("../models/Comment");
-
+const User = require("../models/User");
 const router = express.Router();
 
 // Use memory storage — we'll stream the buffer to Cloudinary manually
@@ -80,6 +80,26 @@ router.get("/", async (req, res) => {
     }
 
     const images = await Image.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("owner", "name email avatar")
+      .limit(100);
+
+    res.json(images);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ---------- Following feed ----------
+router.get("/feed/following", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("following");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const images = await Image.find({
+      owner: { $in: user.following },
+    })
       .sort({ createdAt: -1 })
       .populate("owner", "name email avatar")
       .limit(100);
